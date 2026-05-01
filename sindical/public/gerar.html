@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerar Guia – Contribuição Sindical</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="/" class="header-brand">
+        <div class="header-logo-placeholder">🏛️</div>
+        <div class="header-title">
+          <h1 class="entidade-nome">Sindicato da Categoria</h1>
+          <p>Portal de Contribuição Sindical</p>
+        </div>
+      </a>
+      <nav>
+        <a href="/">Início</a>
+        <a href="/gerar.html" class="active">Gerar Guia</a>
+        <a href="/consulta.html">Consultar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container-sm" style="padding-top: 36px;">
+      <div class="steps" id="steps">
+        <div class="step active" data-step="1"><span class="step-num">1</span> Identificação</div>
+        <div class="step" data-step="2"><span class="step-num">2</span> Dados</div>
+        <div class="step" data-step="3"><span class="step-num">3</span> Competência</div>
+        <div class="step" data-step="4"><span class="step-num">4</span> Guia</div>
+      </div>
+
+      <div id="alerts-container" class="alerts-container"></div>
+
+      <!-- STEP 1: Identificação -->
+      <div id="step-1" class="step-pane">
+        <div class="card">
+          <div class="card-title">🔍 Identificação do Contribuinte</div>
+          <p style="color:#64748b; margin-bottom:20px; font-size:0.93rem;">
+            Informe seu CNPJ (empresa) ou CPF (pessoa física). Não é necessária senha.
+          </p>
+          <div class="form-group">
+            <label for="inp-doc">CNPJ ou CPF *</label>
+            <input type="text" id="inp-doc" placeholder="00.000.000/0001-00 ou 000.000.000-00"
+              oninput="mascaraCNPJ(this)" maxlength="18" autocomplete="off">
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" onclick="buscarContribuinte()">
+            Continuar →
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Dados do Contribuinte -->
+      <div id="step-2" class="step-pane" style="display:none;">
+        <div class="card">
+          <div class="card-title" id="step2-title">✏️ Dados do Contribuinte</div>
+          <p style="color:#64748b; margin-bottom:20px; font-size:0.93rem;" id="step2-desc">
+            Confirme ou atualize seus dados cadastrais.
+          </p>
+          <div class="alerts-container" id="alerts-step2"></div>
+
+          <form id="form-dados" novalidate>
+            <div class="form-group">
+              <label id="label-razao">Razão Social *</label>
+              <input type="text" id="f-razao" required placeholder="Nome completo da empresa ou pessoa">
+            </div>
+            <div class="form-group" id="grp-fantasia">
+              <label>Nome Fantasia</label>
+              <input type="text" id="f-fantasia" placeholder="Como é conhecido no mercado">
+            </div>
+            <div class="form-row cols-4">
+              <div class="form-group" style="grid-column: span 3;">
+                <label>Endereço</label>
+                <input type="text" id="f-endereco" placeholder="Rua, Avenida...">
+              </div>
+              <div class="form-group">
+                <label>Número</label>
+                <input type="text" id="f-numero" placeholder="Nº">
+              </div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label>Complemento</label>
+                <input type="text" id="f-complemento" placeholder="Sala, Apto...">
+              </div>
+              <div class="form-group">
+                <label>Bairro</label>
+                <input type="text" id="f-bairro">
+              </div>
+            </div>
+            <div class="form-row cols-3">
+              <div class="form-group">
+                <label>CEP</label>
+                <input type="text" id="f-cep" placeholder="00000-000" oninput="mascaraCEP(this)"
+                  onblur="buscarCEP(this.value, {endereco:document.getElementById('f-endereco'), bairro:document.getElementById('f-bairro'), cidade:document.getElementById('f-cidade'), uf:document.getElementById('f-uf')})">
+              </div>
+              <div class="form-group">
+                <label>Cidade</label>
+                <input type="text" id="f-cidade">
+              </div>
+              <div class="form-group">
+                <label>UF</label>
+                <select id="f-uf">
+                  <option value="">-</option>
+                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                  <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                  <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                  <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                  <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                  <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+                  <option>SP</option><option>SE</option><option>TO</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label>Telefone</label>
+                <input type="text" id="f-telefone" placeholder="(00) 00000-0000">
+              </div>
+              <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="f-email" placeholder="contato@empresa.com.br">
+              </div>
+            </div>
+            <div id="grp-pj" class="form-row cols-3">
+              <div class="form-group">
+                <label>Capital Social (R$)</label>
+                <input type="number" id="f-capital" step="0.01" min="0" placeholder="0,00">
+              </div>
+              <div class="form-group">
+                <label>Nº de Empregados</label>
+                <input type="number" id="f-empregados" min="0" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label>Folha de Pagamento (R$)</label>
+                <input type="number" id="f-folha" step="0.01" min="0" placeholder="0,00">
+              </div>
+            </div>
+          </form>
+
+          <div style="display:flex; gap:12px; margin-top:8px;">
+            <button class="btn btn-outline" onclick="voltarStep(1)">← Voltar</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="irStep3()">Continuar →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Competência -->
+      <div id="step-3" class="step-pane" style="display:none;">
+        <div class="card">
+          <div class="card-title">📅 Competência da Contribuição</div>
+
+          <div id="contrib-resumo" class="contrib-info" style="display:none;"></div>
+
+          <div class="form-group">
+            <label for="inp-competencia">Período de Referência *</label>
+            <input type="month" id="inp-competencia" onchange="calcularPrevia()">
+            <small style="color:#94a3b8; font-size:0.8rem; margin-top:4px; display:block;">
+              Selecione o ano/mês da contribuição (ex: 2024-01 para Janeiro/2024)
+            </small>
+          </div>
+
+          <div id="previa-calculo" style="display:none; margin-top:20px;">
+            <div class="guia-preview">
+              <p style="font-size:0.82rem; color:#64748b; margin-bottom:8px; text-transform:uppercase; font-weight:700;">Valor a Pagar</p>
+              <div class="valor-total" id="pv-total">R$ 0,00</div>
+              <div style="margin-top:16px; border-top: 1px solid #cbd5e1; padding-top:12px;">
+                <div class="guia-linha">
+                  <span class="label">Valor Principal</span>
+                  <span class="value" id="pv-principal">R$ 0,00</span>
+                </div>
+                <div class="guia-linha" id="row-multa" style="display:none;">
+                  <span class="label">Multa por atraso</span>
+                  <span class="value valor-encargo" id="pv-multa">R$ 0,00</span>
+                </div>
+                <div class="guia-linha" id="row-juros" style="display:none;">
+                  <span class="label">Juros de mora</span>
+                  <span class="value valor-encargo" id="pv-juros">R$ 0,00</span>
+                </div>
+                <div class="guia-linha">
+                  <span class="label">Vencimento</span>
+                  <span class="value" id="pv-vencimento">—</span>
+                </div>
+              </div>
+              <p style="font-size:0.78rem; color:#64748b; margin-top:12px;" id="pv-historico"></p>
+            </div>
+            <div id="alert-vencida" style="display:none; margin-top:12px;"></div>
+          </div>
+
+          <div style="display:flex; gap:12px; margin-top:20px;">
+            <button class="btn btn-outline" onclick="voltarStep(2)">← Voltar</button>
+            <button class="btn btn-primary" style="flex:1;" id="btn-emitir"
+              onclick="emitirGuia()" disabled>Emitir Guia</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: Guia Emitida -->
+      <div id="step-4" class="step-pane" style="display:none;">
+        <div class="card" style="text-align:center; padding: 40px 28px;">
+          <div style="font-size:3rem; margin-bottom:16px;" id="step4-icon">✅</div>
+          <h2 style="font-size:1.4rem; margin-bottom:8px;" id="step4-titulo">Guia Emitida com Sucesso!</h2>
+          <p style="color:#64748b; margin-bottom:28px;" id="step4-desc">Sua guia foi gerada. Clique em "Baixar PDF" para imprimir ou pagar.</p>
+
+          <div class="guia-preview" style="text-align:left; margin-bottom:24px;">
+            <div class="guia-linha">
+              <span class="label">Número da Guia</span>
+              <span class="value" id="g-numero">—</span>
+            </div>
+            <div class="guia-linha">
+              <span class="label">Competência</span>
+              <span class="value" id="g-competencia">—</span>
+            </div>
+            <div class="guia-linha">
+              <span class="label">Vencimento</span>
+              <span class="value" id="g-vencimento">—</span>
+            </div>
+            <div class="guia-linha">
+              <span class="label">Contribuinte</span>
+              <span class="value" id="g-contrib">—</span>
+            </div>
+            <div class="guia-linha">
+              <span class="label">Valor Principal</span>
+              <span class="value" id="g-principal">—</span>
+            </div>
+            <div class="guia-linha" id="grow-multa" style="display:none;">
+              <span class="label">Multa + Juros</span>
+              <span class="value valor-encargo" id="g-encargos">—</span>
+            </div>
+            <div class="guia-linha">
+              <span class="label" style="font-size:1rem;">TOTAL</span>
+              <span class="value" id="g-total" style="font-size:1.3rem; color: var(--cor-primaria);">—</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <a id="btn-pdf" href="#" target="_blank" class="btn btn-primary btn-lg">
+              📥 Baixar PDF
+            </a>
+            <button class="btn btn-outline" onclick="novaGuia()">+ Nova Guia</button>
+            <a href="/consulta.html" class="btn btn-outline">🔍 Ver Todas as Guias</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p class="rodape-texto">Contribuição Sindical — Todos os direitos reservados</p>
+  </footer>
+
+  <div class="loading-overlay" id="loading">
+    <div class="loading-box">
+      <div class="spinner" style="width:36px;height:36px;border-width:3px;border-color:rgba(0,0,0,0.1);border-top-color:var(--cor-primaria);"></div>
+      <p id="loading-msg" style="margin-top:12px; color:#475569;">Aguarde...</p>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let contribuinteAtual = null;
+    let documentoAtual = '';
+    let guiaEmitida = null;
+
+    function mostrarLoading(msg) {
+      document.getElementById('loading-msg').textContent = msg || 'Aguarde...';
+      document.getElementById('loading').style.display = 'flex';
+    }
+    function ocultarLoading() { document.getElementById('loading').style.display = 'none'; }
+
+    function irStep(n) {
+      document.querySelectorAll('.step-pane').forEach(el => el.style.display = 'none');
+      document.getElementById(`step-${n}`).style.display = '';
+      document.querySelectorAll('.step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.className = 'step' + (s === n ? ' active' : (s < n ? ' done' : ''));
+      });
+    }
+
+    function voltarStep(n) { irStep(n); }
+
+    async function buscarContribuinte() {
+      const doc = document.getElementById('inp-doc').value.replace(/\D/g, '');
+      if (doc.length < 11) {
+        showAlert('Informe um CNPJ (14 dígitos) ou CPF (11 dígitos) válido.', 'error', document.getElementById('alerts-container'));
+        return;
+      }
+
+      mostrarLoading('Consultando cadastro...');
+      try {
+        const r = await fetch(`/api/guias/contribuinte/${doc}`);
+        const data = await r.json();
+        documentoAtual = doc;
+
+        if (data.found) {
+          contribuinteAtual = data.contribuinte;
+          preencherForm(data.contribuinte);
+        } else {
+          contribuinteAtual = null;
+          limparForm();
+        }
+
+        const isPJ = doc.length === 14;
+        document.getElementById('grp-fantasia').style.display = isPJ ? '' : 'none';
+        document.getElementById('grp-pj').style.display = isPJ ? '' : 'none';
+        document.getElementById('label-razao').textContent = isPJ ? 'Razão Social *' : 'Nome Completo *';
+        document.getElementById('step2-title').innerHTML = data.found
+          ? '✏️ Confirme seus Dados' : '📝 Cadastro de Contribuinte';
+        document.getElementById('step2-desc').textContent = data.found
+          ? 'Seus dados foram encontrados. Atualize se necessário.'
+          : 'Primeiro acesso? Preencha seus dados para continuar.';
+
+        irStep(2);
+      } catch (e) {
+        showAlert('Erro ao consultar. Tente novamente.', 'error', document.getElementById('alerts-container'));
+      } finally {
+        ocultarLoading();
+      }
+    }
+
+    function preencherForm(c) {
+      document.getElementById('f-razao').value = c.razao_social || '';
+      document.getElementById('f-fantasia').value = c.nome_fantasia || '';
+      document.getElementById('f-endereco').value = c.endereco || '';
+      document.getElementById('f-numero').value = c.numero || '';
+      document.getElementById('f-complemento').value = c.complemento || '';
+      document.getElementById('f-bairro').value = c.bairro || '';
+      document.getElementById('f-cidade').value = c.cidade || '';
+      document.getElementById('f-uf').value = c.uf || '';
+      document.getElementById('f-cep').value = c.cep || '';
+      document.getElementById('f-telefone').value = c.telefone || '';
+      document.getElementById('f-email').value = c.email || '';
+      document.getElementById('f-capital').value = c.capital_social || '';
+      document.getElementById('f-empregados').value = c.num_empregados || '';
+      document.getElementById('f-folha').value = c.folha_pagamento || '';
+    }
+
+    function limparForm() {
+      ['f-razao','f-fantasia','f-endereco','f-numero','f-complemento','f-bairro',
+       'f-cidade','f-cep','f-telefone','f-email','f-capital','f-empregados','f-folha'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      document.getElementById('f-uf').value = '';
+    }
+
+    function getDadosForm() {
+      return {
+        razao_social: document.getElementById('f-razao').value.trim(),
+        nome_fantasia: document.getElementById('f-fantasia').value.trim(),
+        endereco: document.getElementById('f-endereco').value.trim(),
+        numero: document.getElementById('f-numero').value.trim(),
+        complemento: document.getElementById('f-complemento').value.trim(),
+        bairro: document.getElementById('f-bairro').value.trim(),
+        cidade: document.getElementById('f-cidade').value.trim(),
+        uf: document.getElementById('f-uf').value,
+        cep: document.getElementById('f-cep').value.trim(),
+        telefone: document.getElementById('f-telefone').value.trim(),
+        email: document.getElementById('f-email').value.trim(),
+        capital_social: document.getElementById('f-capital').value,
+        num_empregados: document.getElementById('f-empregados').value,
+        folha_pagamento: document.getElementById('f-folha').value,
+      };
+    }
+
+    function irStep3() {
+      const razao = document.getElementById('f-razao').value.trim();
+      if (!razao) {
+        showAlert('Razão Social / Nome é obrigatório.', 'error', document.getElementById('alerts-step2'));
+        return;
+      }
+      const resumo = document.getElementById('contrib-resumo');
+      resumo.innerHTML = `
+        <div class="nome">${razao}</div>
+        <div class="doc">${formatarDocumento(documentoAtual)}</div>
+      `;
+      resumo.style.display = '';
+
+      const ano = new Date().getFullYear();
+      document.getElementById('inp-competencia').value = `${ano}-01`;
+      document.getElementById('inp-competencia').max = `${ano}-12`;
+
+      irStep(3);
+      calcularPrevia();
+    }
+
+    async function calcularPrevia() {
+      const comp = document.getElementById('inp-competencia').value;
+      if (!comp || !documentoAtual) return;
+
+      document.getElementById('btn-emitir').disabled = true;
+      try {
+        const r = await fetch('/api/guias/calcular', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ documento: documentoAtual, competencia: comp }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          showAlert(data.error || 'Erro no cálculo.', 'error', document.getElementById('alerts-container'));
+          return;
+        }
+
+        document.getElementById('pv-principal').textContent = formatarMoeda(data.valorPrincipal);
+        document.getElementById('pv-total').textContent = formatarMoeda(data.valorTotal);
+        document.getElementById('pv-vencimento').textContent = formatarData(data.vencimento);
+        document.getElementById('pv-historico').textContent = data.historico || '';
+
+        const temMulta = data.valorMulta > 0;
+        const temJuros = data.valorJuros > 0;
+        document.getElementById('row-multa').style.display = temMulta ? '' : 'none';
+        document.getElementById('row-juros').style.display = temJuros ? '' : 'none';
+        document.getElementById('pv-multa').textContent = formatarMoeda(data.valorMulta);
+        document.getElementById('pv-juros').textContent = formatarMoeda(data.valorJuros);
+
+        const alertVencida = document.getElementById('alert-vencida');
+        if (data.diasAtraso > 0) {
+          alertVencida.innerHTML = `<div class="alert alert-warning">⚠️ Guia com ${data.diasAtraso} dia(s) de atraso. Multa e juros aplicados conforme convenção coletiva.</div>`;
+          alertVencida.style.display = '';
+        } else {
+          alertVencida.style.display = 'none';
+        }
+
+        document.getElementById('previa-calculo').style.display = '';
+        document.getElementById('btn-emitir').disabled = false;
+      } catch (e) {
+        showAlert('Erro ao calcular. Verifique os dados.', 'error');
+      }
+    }
+
+    async function emitirGuia() {
+      const comp = document.getElementById('inp-competencia').value;
+      if (!comp) { showAlert('Selecione a competência.', 'warning'); return; }
+
+      mostrarLoading('Emitindo guia...');
+      try {
+        const r = await fetch('/api/guias/emitir', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            documento: documentoAtual,
+            competencia: comp,
+            dadosContribuinte: getDadosForm(),
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          showAlert(data.error || 'Erro ao emitir guia.', 'error');
+          return;
+        }
+
+        guiaEmitida = data.guia;
+        mostrarGuiaStep4(data.guia, data.jaExistia);
+        irStep(4);
+      } catch (e) {
+        showAlert('Erro inesperado. Tente novamente.', 'error');
+      } finally {
+        ocultarLoading();
+      }
+    }
+
+    function mostrarGuiaStep4(g, jaExistia) {
+      if (jaExistia) {
+        document.getElementById('step4-icon').textContent = 'ℹ️';
+        document.getElementById('step4-titulo').textContent = 'Guia Já Existente';
+        document.getElementById('step4-desc').textContent = 'Já existe uma guia para esta competência. Consulte-a abaixo.';
+      }
+      document.getElementById('g-numero').textContent = g.numero;
+      document.getElementById('g-competencia').textContent = (g.competencia || '').split('-').reverse().join('/');
+      document.getElementById('g-vencimento').textContent = formatarData(g.vencimento);
+      document.getElementById('g-contrib').textContent = formatarDocumento(documentoAtual);
+      document.getElementById('g-principal').textContent = formatarMoeda(g.valor_principal);
+      document.getElementById('g-total').textContent = formatarMoeda(g.valor_total);
+
+      const encargos = (g.valor_multa || 0) + (g.valor_juros || 0);
+      if (encargos > 0) {
+        document.getElementById('grow-multa').style.display = '';
+        document.getElementById('g-encargos').textContent = formatarMoeda(encargos);
+      }
+
+      document.getElementById('btn-pdf').href = `/api/guias/${g.id}/pdf`;
+    }
+
+    function novaGuia() {
+      contribuinteAtual = null;
+      documentoAtual = '';
+      guiaEmitida = null;
+      document.getElementById('inp-doc').value = '';
+      document.getElementById('inp-competencia').value = '';
+      document.getElementById('previa-calculo').style.display = 'none';
+      document.getElementById('alerts-container').innerHTML = '';
+      irStep(1);
+    }
+  </script>
+</body>
+</html>
