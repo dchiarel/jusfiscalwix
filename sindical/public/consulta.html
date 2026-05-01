@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consultar Guias – Contribuição Sindical</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <a href="/" class="header-brand">
+        <div class="header-logo-placeholder">🏛️</div>
+        <div class="header-title">
+          <h1 class="entidade-nome">Sindicato da Categoria</h1>
+          <p>Portal de Contribuição Sindical</p>
+        </div>
+      </a>
+      <nav>
+        <a href="/">Início</a>
+        <a href="/gerar.html">Gerar Guia</a>
+        <a href="/consulta.html" class="active">Consultar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container-sm" style="padding-top:36px;">
+      <div class="card">
+        <div class="card-title">🔍 Consultar Guias por CNPJ / CPF</div>
+        <p style="color:#64748b; margin-bottom:20px; font-size:0.93rem;">
+          Informe o CNPJ ou CPF para visualizar todas as guias emitidas, pagas e em aberto.
+        </p>
+        <div style="display:flex; gap:12px; align-items:flex-end;">
+          <div class="form-group" style="flex:1; margin-bottom:0;">
+            <label for="inp-consulta">CNPJ ou CPF</label>
+            <input type="text" id="inp-consulta" placeholder="00.000.000/0001-00 ou 000.000.000-00"
+              oninput="mascaraCNPJ(this)" maxlength="18" onkeydown="if(event.key==='Enter') consultar()">
+          </div>
+          <button class="btn btn-primary" onclick="consultar()">Consultar</button>
+        </div>
+        <div class="alerts-container" id="alerts-consulta" style="margin-top:16px;"></div>
+      </div>
+
+      <div id="resultado" style="display:none;">
+        <div class="card" id="contrib-card">
+          <div class="card-title">👤 Dados do Contribuinte</div>
+          <div id="contrib-dados"></div>
+        </div>
+
+        <!-- Resumo numérico -->
+        <div class="form-row cols-3" id="resumo-cards" style="margin-bottom:24px;"></div>
+
+        <div class="card">
+          <div class="card-title">📋 Histórico de Guias</div>
+          <div id="filtros-guias" style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+            <select id="filtro-status" onchange="filtrarTabela()" style="width:auto; min-width:140px;">
+              <option value="">Todos os status</option>
+              <option value="aberta">Em aberto</option>
+              <option value="paga">Paga</option>
+              <option value="vencida">Vencida</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="tabela-guias">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Competência</th>
+                  <th>Vencimento</th>
+                  <th>Valor Total</th>
+                  <th>Status</th>
+                  <th>Pagamento</th>
+                  <th>PDF</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-guias"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="text-align:center; margin-top:8px;">
+          <a href="/gerar.html" class="btn btn-primary">+ Gerar Nova Guia</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p class="rodape-texto">Contribuição Sindical — Todos os direitos reservados</p>
+  </footer>
+
+  <div class="loading-overlay" id="loading">
+    <div class="loading-box">
+      <div class="spinner" style="width:36px;height:36px;border-width:3px;border-color:rgba(0,0,0,0.1);border-top-color:var(--cor-primaria);"></div>
+      <p style="margin-top:12px; color:#475569;">Consultando...</p>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    let guiasAtual = [];
+
+    async function consultar() {
+      const doc = document.getElementById('inp-consulta').value.replace(/\D/g, '');
+      if (doc.length < 11) {
+        showAlert('Informe um CNPJ ou CPF válido.', 'error', document.getElementById('alerts-consulta'));
+        return;
+      }
+      document.getElementById('loading').style.display = 'flex';
+      try {
+        const r = await fetch(`/api/guias/consultar/${doc}`);
+        const data = await r.json();
+        if (!data.found) {
+          showAlert('Nenhum cadastro encontrado para este CNPJ/CPF. <a href="/gerar.html">Clique aqui para se cadastrar e gerar sua primeira guia.</a>', 'warning', document.getElementById('alerts-consulta'));
+          document.getElementById('resultado').style.display = 'none';
+          return;
+        }
+        document.getElementById('alerts-consulta').innerHTML = '';
+        renderContribuinte(data.contribuinte);
+        guiasAtual = data.guias;
+        renderResumo(data.guias);
+        renderTabela(data.guias);
+        document.getElementById('resultado').style.display = '';
+      } catch(e) {
+        showAlert('Erro ao consultar. Tente novamente.', 'error', document.getElementById('alerts-consulta'));
+      } finally {
+        document.getElementById('loading').style.display = 'none';
+      }
+    }
+
+    function renderContribuinte(c) {
+      const end = [c.endereco, c.numero, c.complemento, c.bairro, c.cidade && c.uf ? `${c.cidade}/${c.uf}` : c.cidade].filter(Boolean).join(', ');
+      document.getElementById('contrib-dados').innerHTML = `
+        <div class="form-row cols-2">
+          <div><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">${c.tipo === 'PJ' ? 'CNPJ' : 'CPF'}</span><br><strong>${formatarDocumento(c.documento)}</strong></div>
+          <div><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">Razão Social</span><br><strong>${c.razao_social}</strong></div>
+          ${c.nome_fantasia ? `<div><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">Nome Fantasia</span><br>${c.nome_fantasia}</div>` : ''}
+          ${c.email ? `<div><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">E-mail</span><br>${c.email}</div>` : ''}
+          ${end ? `<div style="grid-column:1/-1;"><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">Endereço</span><br>${end}</div>` : ''}
+          ${c.tipo === 'PJ' && c.capital_social ? `<div><span style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;font-weight:700;">Capital Social</span><br>${formatarMoeda(c.capital_social)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    function renderResumo(guias) {
+      const abertas = guias.filter(g => g.status === 'aberta' || g.status === 'vencida');
+      const pagas = guias.filter(g => g.status === 'paga');
+      const vencidas = guias.filter(g => g.status === 'vencida');
+      const totalPago = pagas.reduce((s, g) => s + (g.valor_pago || g.valor_total || 0), 0);
+      const totalAberto = abertas.reduce((s, g) => s + g.valor_total, 0);
+
+      document.getElementById('resumo-cards').innerHTML = `
+        <div class="card" style="text-align:center; padding:18px; border-top:4px solid var(--cor-primaria);">
+          <div style="font-size:1.6rem;font-weight:800;color:var(--cor-primaria);">${guias.length}</div>
+          <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total de Guias</div>
+        </div>
+        <div class="card" style="text-align:center; padding:18px; border-top:4px solid #059669;">
+          <div style="font-size:1.6rem;font-weight:800;color:#059669;">${formatarMoeda(totalPago)}</div>
+          <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Total Pago (${pagas.length} guias)</div>
+        </div>
+        <div class="card" style="text-align:center; padding:18px; border-top:4px solid ${vencidas.length > 0 ? '#dc2626' : '#94a3b8'};">
+          <div style="font-size:1.6rem;font-weight:800;color:${vencidas.length > 0 ? '#dc2626' : '#94a3b8'};">${formatarMoeda(totalAberto)}</div>
+          <div style="font-size:0.82rem;color:#64748b;margin-top:4px;">Em Aberto${vencidas.length > 0 ? ` (${vencidas.length} vencidas)` : ''}</div>
+        </div>
+      `;
+    }
+
+    function renderTabela(guias) {
+      const status = document.getElementById('filtro-status').value;
+      const filtradas = status ? guias.filter(g => g.status === status) : guias;
+      const badges = {
+        aberta: '<span class="badge badge-aberta">Em Aberto</span>',
+        paga: '<span class="badge badge-paga">Paga</span>',
+        vencida: '<span class="badge badge-vencida">Vencida</span>',
+        cancelada: '<span class="badge badge-cancelada">Cancelada</span>',
+      };
+
+      document.getElementById('tbody-guias').innerHTML = filtradas.length === 0
+        ? '<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:24px;">Nenhuma guia encontrada.</td></tr>'
+        : filtradas.map(g => `
+          <tr>
+            <td><strong>${g.numero}</strong></td>
+            <td>${(g.competencia || '').split('-').reverse().join('/')}</td>
+            <td>${formatarData(g.vencimento)}</td>
+            <td><strong>${formatarMoeda(g.valor_total)}</strong></td>
+            <td>${badges[g.status] || g.status}</td>
+            <td style="font-size:0.85rem;color:#64748b;">
+              ${g.data_pagamento ? formatarData(g.data_pagamento) + '<br>' + formatarMoeda(g.valor_pago) : '—'}
+            </td>
+            <td>
+              <a href="/api/guias/${g.id}/pdf" target="_blank" class="btn btn-outline btn-sm">📥 PDF</a>
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function filtrarTabela() { renderTabela(guiasAtual); }
+  </script>
+</body>
+</html>
